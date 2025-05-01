@@ -6,6 +6,8 @@ import re
 import argparse
 import json
 
+ROOT_DIR = '/home/user/GithubRepos'
+
 
 def docker_container_name(name):
     res = subprocess.run('docker container ls -a --format json',
@@ -65,7 +67,7 @@ def cmd_switch_build(subparsers):
 def cmd_clone(args):
     link = args.link
     reponame = re.fullmatch(r'https:\/\/.+\/(.+)\.git', link).group(1)
-    os.chdir('/home/user/GithubRepos')
+    os.chdir(ROOT_DIR)
 
     branch = ""
     if args.branch:
@@ -99,7 +101,7 @@ def cmd_docker(args):
     if not docker_container_name(args.name):
         print('Creating new container')
         subprocess.run(
-            f'docker run --name {name} -it --mount type=bind,source=/home/user/GithubRepos/{name},target=/app {image}:latest /bin/bash',
+            f'docker run --name {name} -it --mount type=bind,source={ROOT_DIR}/{name},target=/app {image}:latest /bin/bash',
             shell=True)
     else:
         print('Using existing container')
@@ -109,7 +111,7 @@ def cmd_docker(args):
 
 def cmd_clear(args):
     name = args.name
-    os.chdir('/home/user/GithubRepos')
+    os.chdir(ROOT_DIR)
     os.chdir(name)
     if args.list:
         subprocess.run('git clean -ndX', shell=True)
@@ -119,7 +121,7 @@ def cmd_clear(args):
 
 def cmd_code(args):
     name = args.name
-    os.chdir('/home/user/GithubRepos')
+    os.chdir(ROOT_DIR)
     subprocess.run(f'code {name}', shell=True)
 
 
