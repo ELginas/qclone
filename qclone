@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from pathlib import Path
 import subprocess
 import os
 import re
@@ -38,6 +39,7 @@ def cmd_docker_build(subparsers):
     parser = subparsers.add_parser('docker', help='docker help')
     parser.add_argument('name')
     parser.add_argument('-t', '--type', type=str, default='debian')
+    parser.add_argument('-d', '--data', action='store_true')
     parser.set_defaults(func=cmd_docker)
 
 
@@ -96,18 +98,30 @@ IMAGES = {
 def cmd_docker(args):
     distro = args.type
     name = args.name
+    data = args.data
     if not distro in IMAGES:
         return
     image = IMAGES[distro]
     if not docker_container_name(args.name):
         print('Creating new container')
+        data_arg = ""
+        if data:
+            data_path = create_container_data_folder(distro, name)
+            data_arg = f' --mount type=bind,source={data_path},target=/data'
         subprocess.run(
-            f'docker run --name {name} -it --mount type=bind,source={ROOT_DIR}/{name},target=/app {image}:latest /bin/bash',
+            f'docker run --name {name} -it --mount type=bind,source={ROOT_DIR}/{name},target=/app{data_arg} {image}:latest /bin/bash',
             shell=True)
     else:
         print('Using existing container')
         subprocess.run(f'docker start {name}', shell=True)
         subprocess.run(f'docker attach {name}', shell=True)
+
+
+def create_container_data_folder(distro, name):
+    maintenance_path = Path(os.path.realpath(__file__)).parent
+    container_data_folder = maintenance_path / ".container-data" / f"{name}-{distro}"
+    subprocess.run(f"mkdir -p '{container_data_folder}'", shell=True)
+    return container_data_folder
 
 
 def cmd_clear(args):
