@@ -1,0 +1,16 @@
+FROM archlinux:latest
+
+RUN pacman -Sy
+RUN pacman -S sudo --noconfirm
+RUN <<EOF
+useradd -m user
+echo "%sudo ALL=(ALL:ALL) ALL" >> /etc/sudoers
+echo "user ALL = NOPASSWD : ALL" >> /etc/sudoers
+groupadd sudo
+usermod -aG sudo user
+echo 'Defaults        lecture = never' > /etc/sudoers.d/privacy
+EOF
+RUN --mount=type=secret,id=pass,target=/root/.password \
+    cat /root/.password | passwd user --stdin
+USER user
+WORKDIR /app

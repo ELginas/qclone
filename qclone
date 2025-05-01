@@ -1,0 +1,136 @@
+#!/usr/bin/python
+
+import subprocess
+import os
+import re
+import argparse
+import json
+
+
+def docker_container_name(name):
+    res = subprocess.run('docker container ls -a --format json',
+                         shell=True,
+                         capture_output=True)
+    if res.returncode != 0:
+        return
+    data = res.stdout.decode('UTF-8')
+    for line in data.splitlines():
+        entry = json.loads(line)
+        if name == entry['Names']:
+            return entry
+
+
+def cmd_clone_build(subparsers):
+    parser = subparsers.add_parser('clone', help='clone help')
+    parser.add_argument('link')
+    parser.add_argument('-b', '--branch', type=str, default="")
+    # parser_list.add_argument('-l', '--less', action='store_true')
+    # parser_list.add_argument('-B', '--back', type=int, default=0) # for hexdump
+    # parser_list.add_argument('-r', '--rows', type=int, default=0) # for hexdump
+    # parser_list.add_argument('-s', '--seek')
+    parser.set_defaults(func=cmd_clone)
+
+
+def cmd_docker_build(subparsers):
+    parser = subparsers.add_parser('docker', help='docker help')
+    parser.add_argument('name')
+    parser.add_argument('-t', '--type', type=str, default='debian')
+    parser.set_defaults(func=cmd_docker)
+
+
+def cmd_code_build(subparsers):
+    parser = subparsers.add_parser('code', help='code help')
+    parser.add_argument('name')
+    parser.set_defaults(func=cmd_code)
+
+
+def cmd_clear_build(subparsers):
+    parser = subparsers.add_parser('clear', help='clear help')
+    parser.add_argument('name')
+    parser.add_argument('-l', '--list', action='store_true')
+    parser.set_defaults(func=cmd_clear)
+
+
+# Note: it runs from workdir, not from project dir automatically
+def cmd_switch_build(subparsers):
+    parser = subparsers.add_parser('switch', help='switch help')
+    parser.add_argument('commit')
+    parser.set_defaults(func=cmd_switch)
+
+
+# TODO: branch builds for versions (kinda good alr)
+# TODO: github build runners (read worflows -> actions -> scripts)
+# TODO: experiment with / mounted volumes
+# TODO: ubuntu automatic timezones
+def cmd_clone(args):
+    link = args.link
+    reponame = re.fullmatch(r'https:\/\/.+\/(.+)\.git', link).group(1)
+    os.chdir('/home/user/GithubRepos')
+
+    branch = ""
+    if args.branch:
+        branch = f' --branch {args.branch}'
+    subprocess.run(f'git clone{branch} --depth 1 {link}', shell=True)
+    os.chdir(reponame)
+    subprocess.run(f'git submodule update --init --depth 1', shell=True)
+    subprocess.run(f'code .', shell=True)
+
+
+def cmd_switch(args):
+    commit = args.commit
+    subprocess.run(f'git fetch --depth 1 origin {commit}', shell=True)
+    subprocess.run('git checkout FETCH_HEAD', shell=True)
+
+
+IMAGES = {
+    'arch': 'githubrepos-arch',
+    'debian': 'githubrepos-debian',
+    'debian-testing': 'githubrepos-debian-testing',
+    'ubuntu-24.04': 'githubrepos-ubuntu-24.04',
+}
+
+
+def cmd_docker(args):
+    distro = args.type
+    name = args.name
+    if not distro in IMAGES:
+        return
+    image = IMAGES[distro]
+    if not docker_container_name(args.name):
+        print('Creating new container')
+        subprocess.run(
+            f'docker run --name {name} -it --mount type=bind,source=/home/user/GithubRepos/{name},target=/app {image}:latest /bin/bash',
+            shell=True)
+    else:
+        print('Using existing container')
+        subprocess.run(f'docker start {name}', shell=True)
+        subprocess.run(f'docker attach {name}', shell=True)
+
+
+def cmd_clear(args):
+    name = args.name
+    os.chdir('/home/user/GithubRepos')
+    os.chdir(name)
+    if args.list:
+        subprocess.run('git clean -ndX', shell=True)
+    else:
+        subprocess.run('git clean -dXf', shell=True)
+
+
+def cmd_code(args):
+    name = args.name
+    os.chdir('/home/user/GithubRepos')
+    subprocess.run(f'code {name}', shell=True)
+
+
+parser = argparse.ArgumentParser(prog='qclone', )
+subparsers = parser.add_subparsers(help='sub-command help', required=True)
+
+cmd_clone_build(subparsers)
+cmd_docker_build(subparsers)
+cmd_code_build(subparsers)
+cmd_clear_build(subparsers)
+cmd_switch_build(subparsers)
+
+args = parser.parse_args()
+args.func(args)

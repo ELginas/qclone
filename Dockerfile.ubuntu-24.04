@@ -1,0 +1,13 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y sudo
+RUN <<EOF
+userdel ubuntu
+rm -r /home/ubuntu
+useradd -m user
+echo "user ALL = NOPASSWD : ALL" >> /etc/sudoers
+mkdir -p /etc/sudoers.d/
+echo 'Defaults        lecture = never' > /etc/sudoers.d/privacy
+EOF
+USER user
+WORKDIR /app

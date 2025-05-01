@@ -1,0 +1,11 @@
+FROM debian:testing
+
+RUN apt-get update && apt-get install -y sudo
+RUN <<EOF
+useradd -m user
+echo "user ALL = NOPASSWD : ALL" >> /etc/sudoers
+mkdir -p /etc/sudoers.d/
+echo 'Defaults        lecture = never' > /etc/sudoers.d/privacy
+EOF
+USER user
+WORKDIR /app
