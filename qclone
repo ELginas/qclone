@@ -6,6 +6,7 @@ import re
 import argparse
 import json
 
+# Note: Make sure path is absolute and doesn't include `~` symbol
 ROOT_DIR = '/home/user/GithubRepos'
 
 

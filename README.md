@@ -8,14 +8,15 @@
 # Create repository root folder. It can be any directory
 mkdir ~/GithubRepos
 # Clone under root folder for clean structure
-git clone https://github.com/elginas/qclone .maintenance
+git clone https://github.com/ELginas/qclone.git .maintenance
 # Add qclone to PATH. In my case it is a symlink to ~/.local/bin
 cd ~/.local/bin
 ln -s ~/GithubRepos/.maintenance/qclone
 # Build Docker images
 cd ~/GithubRepos/.maintenance
 ./build_image.sh
-# Change ROOT_DIR variable to root folder in qclone python script using any text editor
+# Change ROOT_DIR variable to root folder in qclone python
+# script using any text editor.
 # Change .password file text to any other value.
 ```
 
@@ -24,7 +25,7 @@ cd ~/GithubRepos/.maintenance
 Clone a shallow repository and open VSCode automatically:
 
 ```sh
-qclone clone https://github.com/elginas/qclone
+qclone clone https://github.com/ELginas/qclone.git
 ```
 
 Find out about other useful commands:
