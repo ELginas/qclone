@@ -70,7 +70,15 @@ def cmd_switch_build(subparsers):
 # TODO: ubuntu automatic timezones
 def cmd_clone(args):
     link = args.link
-    reponame = re.fullmatch(r'https:\/\/.+\/(.+)\.git', link).group(1)
+    reponame = None
+    if link.startswith('https'):
+        reponame = re.fullmatch(r'https:\/\/.+\/(.+)\.git', link).group(1)
+    elif link.startswith('git'):
+        reponame = re.fullmatch(r'git@github\.com:\w+\/(\w+).git', link).group(1)
+    else:
+        print(f'incorrect link: {link}')
+        return
+    
     os.chdir(ROOT_DIR)
 
     branch = ""
