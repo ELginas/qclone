@@ -8,7 +8,7 @@ import argparse
 import json
 
 # Note: Make sure path is absolute and doesn't include `~` symbol
-ROOT_DIR = '/home/user/GithubRepos'
+ROOT_DIR = '/home/garnet/git_repos'
 
 
 def docker_container_name(name):
@@ -28,6 +28,7 @@ def cmd_clone_build(subparsers):
     parser = subparsers.add_parser('clone', help='clone help')
     parser.add_argument('link')
     parser.add_argument('-b', '--branch', type=str, default="")
+    parser.add_argument('-a', '--add', action='store_true')
     # parser_list.add_argument('-l', '--less', action='store_true')
     # parser_list.add_argument('-B', '--back', type=int, default=0) # for hexdump
     # parser_list.add_argument('-r', '--rows', type=int, default=0) # for hexdump
@@ -78,7 +79,10 @@ def cmd_clone(args):
     subprocess.run(f'git clone{branch} --depth 1 {link}', shell=True)
     os.chdir(reponame)
     subprocess.run(f'git submodule update --init --depth 1', shell=True)
-    subprocess.run(f'code .', shell=True)
+    if args.add:
+        subprocess.run(f'code -a .', shell=True)
+    else:
+        subprocess.run(f'code .', shell=True)
 
 
 def cmd_switch(args):
