@@ -86,7 +86,7 @@ def cmd_clone(args):
         branch = f' --branch {args.branch}'
     subprocess.run(f'git clone{branch} --depth 1 {link}', shell=True)
     os.chdir(reponame)
-    subprocess.run(f'git submodule update --init --depth 1', shell=True)
+    subprocess.run(f'git submodule update --init --depth 1 --recursive', shell=True)
     if args.add:
         subprocess.run(f'code -a .', shell=True)
     else:
